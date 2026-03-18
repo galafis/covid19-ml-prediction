@@ -1,0 +1,46 @@
+version: "3.9"
+
+services:
+  train:
+    build:
+      context: .
+      target: runtime
+    image: covid19-ml-prediction:latest
+    container_name: covid19_train
+    env_file: .env
+    environment:
+      - LOG_LEVEL=INFO
+      - MODEL_ALGORITHM=random_forest
+      - PYTHONPATH=/app
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./reports:/app/reports
+    command: python -m src.pipeline
+
+  test:
+    build:
+      context: .
+      target: runtime
+    image: covid19-ml-prediction:latest
+    container_name: covid19_test
+    environment:
+      - PYTHONPATH=/app
+    volumes:
+      - ./data:/app/data
+    command: pytest tests/ -v --tb=short
+
+  notebook:
+    build:
+      context: .
+      target: runtime
+    image: covid19-ml-prediction:latest
+    container_name: covid19_notebook
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./notebooks:/app/notebooks
+      - ./data:/app/data
+    environment:
+      - PYTHONPATH=/app
+    command: jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root
